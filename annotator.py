@@ -20,7 +20,7 @@ class Annotator:
     See demo.py for a working example.'''
 
     def __init__(self, labels, videos_folder, annotation_file='labels.json',
-                 status_file='status.json', video_ext=['.mp4', '.avi'],
+                 status_file='status.json', video_ext=['.mp4', '.avi','.rmvb','.wmv','.flv','.mov'],
                  sort_files_list=True, N_show_approx=100, screen_ratio=16/9, 
                  image_resize=1, loop_duration=None):
         
@@ -44,7 +44,7 @@ class Annotator:
         self.debug_verbose = 0
 
 
-    def video_to_clips(self, video_file, output_folder, resize=1, overlap=0, clip_length=90):
+    def video_to_clips(self, video_file, output_folder, resize=1, overlap=0, clip_length=10):
         '''Opens a long video file and saves it into several consecutive clips
         of predefined length'''
         # Initialise the counters
@@ -53,12 +53,14 @@ class Annotator:
         # Generate clips path
         vid_name = os.path.splitext(os.path.basename(video_file))[0]
         clip_name = os.path.join(output_folder, '%s_clip_%%08d.mp4' % vid_name)
-        # Calculate the overlap in number of frames
-        assert 0 <= overlap < 1, 'The overlap must be in the range [0, 1['
-        frames_overlap = int(clip_length*overlap)
         # Open the source video and read the framerate
         video_cap = cv2.VideoCapture(video_file)
         fps = video_cap.get(cv2.CAP_PROP_FPS)
+        # calculate clip_length based on fps
+        clip_length = clip_length*fps
+        # Calculate the overlap in number of frames
+        assert 0 <= overlap < 1, 'The overlap must be in the range [0, 1['
+        frames_overlap = int(clip_length*overlap)
         init = True
         while video_cap.isOpened():
             # Get the next video frame
@@ -87,10 +89,9 @@ class Annotator:
                 init = False
                 clip_cap = cv2.VideoWriter(clip_name % clip_counter,
                                            fourcc, fps, 
-                                           (frame_size[1], frame_size[0]))
-            
-            # Write the video frame into the clip
-            if clip_frame_counter%10==0:
+                                           (frame_size[1], frame_size[0]))            
+            # Write the video frame into the clip every seconds
+            if clip_frame_counter%(fps//2)==0:
                 clip_cap.write(frame)
             # Increase the index
             if clip_frame_counter < clip_length - 1:
