@@ -65,16 +65,22 @@ class Annotator:
             _, frame = video_cap.read()
 
             # Resize the frame
-            if resize != 1 and frame is not None:
-                frame = cv2.resize(frame, (0, 0), fx=resize, fy=resize)
+#            if resize != 1 and frame is not None:
+#                frame = cv2.resize(frame, (0, 0), fx=resize, fy=resize)
+                
+            h, w, _ = frame.shape
+            if h>400 or w>400:
+                scale = 400/max(h,w)
+                frame=cv2.resize(frame, (int(w*scale), int(h*scale)))
                 
             if frame is None:
                 print('There was a problem processing frame %d' % video_frame_counter)
-            
+             
             # Initialise the video
             if init:
                 frame_size = frame.shape
                 video_length = int(video_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                print('video length ', video_length, ' size ', frame_size)
                 fourcc = cv2.VideoWriter_fourcc(*'MJPG')
                 clip_frame_counter = 0
                 video_frame_counter = 0
@@ -82,9 +88,10 @@ class Annotator:
                 clip_cap = cv2.VideoWriter(clip_name % clip_counter,
                                            fourcc, fps, 
                                            (frame_size[1], frame_size[0]))
-
+            
             # Write the video frame into the clip
-            clip_cap.write(frame)
+            if clip_frame_counter%10==0:
+                clip_cap.write(frame)
             # Increase the index
             if clip_frame_counter < clip_length - 1:
                 clip_frame_counter += 1
